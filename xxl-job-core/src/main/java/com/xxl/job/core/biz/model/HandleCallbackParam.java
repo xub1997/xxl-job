@@ -3,6 +3,7 @@ package com.xxl.job.core.biz.model;
 import java.io.Serializable;
 
 /**
+ * 执行结果回调
  * Created by xuxueli on 17/3/2.
  */
 public class HandleCallbackParam implements Serializable {

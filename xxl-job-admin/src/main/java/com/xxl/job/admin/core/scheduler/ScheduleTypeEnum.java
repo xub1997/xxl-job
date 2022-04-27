@@ -7,15 +7,16 @@ import com.xxl.job.admin.core.util.I18nUtil;
  */
 public enum ScheduleTypeEnum {
 
+    //无
     NONE(I18nUtil.getString("schedule_type_none")),
 
     /**
-     * schedule by cron
+     * schedule by cron cron表达式执行
      */
     CRON(I18nUtil.getString("schedule_type_cron")),
 
     /**
-     * schedule by fixed rate (in seconds)
+     * schedule by fixed rate (in seconds) 固定速率执行(秒为单位)
      */
     FIX_RATE(I18nUtil.getString("schedule_type_fix_rate")),
 

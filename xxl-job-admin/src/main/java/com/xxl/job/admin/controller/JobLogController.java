@@ -135,6 +135,14 @@ public class JobLogController {
 		return "joblog/joblog.detail";
 	}
 
+	/**
+	 * 查看日志详情
+	 * @param executorAddress 执行器地址
+	 * @param triggerTime 触发时间
+	 * @param logId 日志记录id
+	 * @param fromLineNum 日志起始行数 默认为0（jobLog.getHandleCode的值默认为0，通过回调接口更新对应的值）
+	 * @return
+	 */
 	@RequestMapping("/logDetailCat")
 	@ResponseBody
 	public ReturnT<LogResult> logDetailCat(String executorAddress, long triggerTime, long logId, int fromLineNum){
@@ -142,7 +150,7 @@ public class JobLogController {
 			ExecutorBiz executorBiz = XxlJobScheduler.getExecutorBiz(executorAddress);
 			ReturnT<LogResult> logResult = executorBiz.log(new LogParam(triggerTime, logId, fromLineNum));
 
-			// is end
+			// is end 判断
             if (logResult.getContent()!=null && logResult.getContent().getFromLineNum() > logResult.getContent().getToLineNum()) {
                 XxlJobLog jobLog = xxlJobLogDao.load(logId);
                 if (jobLog.getHandleCode() > 0) {

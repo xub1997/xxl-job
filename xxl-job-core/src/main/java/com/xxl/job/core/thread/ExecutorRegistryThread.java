@@ -25,7 +25,7 @@ public class ExecutorRegistryThread {
     private volatile boolean toStop = false;
     public void start(final String appname, final String address){
 
-        // valid
+        // valid 校验执行器app名称以及xxl_admin地址
         if (appname==null || appname.trim().length()==0) {
             logger.warn(">>>>>>>>>>> xxl-job, executor registry config fail, appname is null.");
             return;
@@ -39,7 +39,7 @@ public class ExecutorRegistryThread {
             @Override
             public void run() {
 
-                // registry
+                // registry 向xxl-admin注册校验执行器app名称及调用地址
                 while (!toStop) {
                     try {
                         RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), appname, address);
@@ -65,6 +65,7 @@ public class ExecutorRegistryThread {
 
                     }
 
+                    //线程暂停（心跳时间）
                     try {
                         if (!toStop) {
                             TimeUnit.SECONDS.sleep(RegistryConfig.BEAT_TIMEOUT);
@@ -76,7 +77,7 @@ public class ExecutorRegistryThread {
                     }
                 }
 
-                // registry remove
+                // registry remove （程序终止时向xxl-admin移除地址）
                 try {
                     RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), appname, address);
                     for (AdminBiz adminBiz: XxlJobExecutor.getAdminBizList()) {

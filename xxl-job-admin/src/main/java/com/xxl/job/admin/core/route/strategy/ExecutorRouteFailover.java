@@ -14,6 +14,12 @@ import java.util.List;
  */
 public class ExecutorRouteFailover extends ExecutorRouter {
 
+    /**
+     * 故障转移(通过调用心跳接口，判断执行器地址是否可用，返回其中一个可用的地址)
+     * @param triggerParam
+     * @param addressList
+     * @return
+     */
     @Override
     public ReturnT<String> route(TriggerParam triggerParam, List<String> addressList) {
 

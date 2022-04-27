@@ -33,12 +33,13 @@ public class JobLogReportHelper {
             @Override
             public void run() {
 
-                // last clean log time
+                // last clean log time 最新清除日志时间
                 long lastCleanLogTime = 0;
 
 
                 while (!toStop) {
 
+                    //在线程 run 方法的前半部分，线程会统计 3 天内，每天的运行次数(调度次数)、成功运行数、失败次数；然后更新或新增 xxl_job_log_report 表的数据
                     // 1、log-report refresh: refresh log report in 3 days
                     try {
 
@@ -61,14 +62,24 @@ public class JobLogReportHelper {
 
                             Date todayTo = itemDay.getTime();
 
-                            // refresh log-report every minute
+                            // refresh log-report every minute 刷新
                             XxlJobLogReport xxlJobLogReport = new XxlJobLogReport();
+                            //运行次数(调度次数)、成功运行数、失败次数
                             xxlJobLogReport.setTriggerDay(todayFrom);
                             xxlJobLogReport.setRunningCount(0);
                             xxlJobLogReport.setSucCount(0);
                             xxlJobLogReport.setFailCount(0);
 
+                            /**
+                             * SELECT
+                             * 			COUNT(handle_code) triggerDayCount,
+                             * 			SUM(CASE WHEN (trigger_code in (0, 200) and handle_code = 0) then 1 else 0 end) as triggerDayCountRunning,
+                             * 			SUM(CASE WHEN handle_code = 200 then 1 else 0 end) as triggerDayCountSuc
+                             * 		FROM xxl_job_log
+                             * 		WHERE trigger_time BETWEEN #{from} and #{to}
+                             */
                             Map<String, Object> triggerCountMap = XxlJobAdminConfig.getAdminConfig().getXxlJobLogDao().findLogReport(todayFrom, todayTo);
+
                             if (triggerCountMap!=null && triggerCountMap.size()>0) {
                                 int triggerDayCount = triggerCountMap.containsKey("triggerDayCount")?Integer.valueOf(String.valueOf(triggerCountMap.get("triggerDayCount"))):0;
                                 int triggerDayCountRunning = triggerCountMap.containsKey("triggerDayCountRunning")?Integer.valueOf(String.valueOf(triggerCountMap.get("triggerDayCountRunning"))):0;
@@ -80,7 +91,7 @@ public class JobLogReportHelper {
                                 xxlJobLogReport.setFailCount(triggerDayCountFail);
                             }
 
-                            // do refresh
+                            // do refresh 保存或更新统计指标
                             int ret = XxlJobAdminConfig.getAdminConfig().getXxlJobLogReportDao().update(xxlJobLogReport);
                             if (ret < 1) {
                                 XxlJobAdminConfig.getAdminConfig().getXxlJobLogReportDao().save(xxlJobLogReport);
@@ -93,6 +104,7 @@ public class JobLogReportHelper {
                         }
                     }
 
+                    //在线程 run 方法的后半部分，线程按天对日志进行清理，如果当前时间与上次清理的时间相隔超过一天，就会清理日志记录
                     // 2、log-clean: switch open & once each day
                     if (XxlJobAdminConfig.getAdminConfig().getLogretentiondays()>0
                             && System.currentTimeMillis() - lastCleanLogTime > 24*60*60*1000) {

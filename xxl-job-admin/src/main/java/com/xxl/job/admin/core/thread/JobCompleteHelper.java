@@ -62,6 +62,8 @@ public class JobCompleteHelper {
 			@Override
 			public void run() {
 
+				//这里依赖于 JobTriggerPoolHelper 来调度 job，所以在 JobCompleteHelper 的监视线程开始时，
+				// 有一个 50 秒的等待，就是等待 JobTriggerPoolHelper 启动完成(XxlJobCompleter.updateHandleInfoAndFinish方法里面调用了JobTriggerPoolHelper.trigger方法)
 				// wait for JobTriggerPoolHelper-init
 				try {
 					TimeUnit.MILLISECONDS.sleep(50);
@@ -76,6 +78,18 @@ public class JobCompleteHelper {
 					try {
 						// 任务结果丢失处理：调度记录停留在 "运行中" 状态超过10min，且对应执行器心跳注册失败不在线，则将本地调度主动标记失败；
 						Date losedTime = DateUtil.addMinutes(new Date(), -10);
+						/**
+						 * SELECT
+						 * 			t.id
+						 * 		FROM
+						 * 			xxl_job_log t
+						 * 			LEFT JOIN xxl_job_registry t2 ON t.executor_address = t2.registry_value
+						 * 		WHERE
+						 * 			t.trigger_code = 200
+						 * 				AND t.handle_code = 0
+						 * 				AND t.trigger_time <![CDATA[ <= ]]> #{losedTime}
+						 * 				AND t2.id IS NULL;
+						 */
 						List<Long> losedJobIds  = XxlJobAdminConfig.getAdminConfig().getXxlJobLogDao().findLostJobIds(losedTime);
 
 						if (losedJobIds!=null && losedJobIds.size()>0) {
@@ -87,7 +101,7 @@ public class JobCompleteHelper {
 								jobLog.setHandleTime(new Date());
 								jobLog.setHandleCode(ReturnT.FAIL_CODE);
 								jobLog.setHandleMsg( I18nUtil.getString("joblog_lost_fail") );
-
+								//更新执行信息和结束 job
 								XxlJobCompleter.updateHandleInfoAndFinish(jobLog);
 							}
 
@@ -135,6 +149,11 @@ public class JobCompleteHelper {
 
 	// ---------------------- helper ----------------------
 
+	/**
+	 * 当有回调请求时，public callback 方法（该方法被 AdminBizImpl 调用）会在线程池中创建一个线程，遍历回调请求的参数列表，依次处理回调参数
+	 * @param callbackParamList
+	 * @return
+	 */
 	public ReturnT<String> callback(List<HandleCallbackParam> callbackParamList) {
 
 		callbackThreadPool.execute(new Runnable() {
@@ -152,7 +171,7 @@ public class JobCompleteHelper {
 	}
 
 	private ReturnT<String> callback(HandleCallbackParam handleCallbackParam) {
-		// valid log item
+		// valid log item 校验日志数据
 		XxlJobLog log = XxlJobAdminConfig.getAdminConfig().getXxlJobLogDao().load(handleCallbackParam.getLogId());
 		if (log == null) {
 			return new ReturnT<String>(ReturnT.FAIL_CODE, "log item not found.");
@@ -161,7 +180,7 @@ public class JobCompleteHelper {
 			return new ReturnT<String>(ReturnT.FAIL_CODE, "log repeate callback.");     // avoid repeat callback, trigger child job etc
 		}
 
-		// handle msg
+		// handle msg 处理返回结果信息
 		StringBuffer handleMsg = new StringBuffer();
 		if (log.getHandleMsg()!=null) {
 			handleMsg.append(log.getHandleMsg()).append("<br>");
@@ -170,7 +189,7 @@ public class JobCompleteHelper {
 			handleMsg.append(handleCallbackParam.getHandleMsg());
 		}
 
-		// success, save log
+		// success, save log 更新和完成 job
 		log.setHandleTime(new Date());
 		log.setHandleCode(handleCallbackParam.getHandleCode());
 		log.setHandleMsg(handleMsg.toString());

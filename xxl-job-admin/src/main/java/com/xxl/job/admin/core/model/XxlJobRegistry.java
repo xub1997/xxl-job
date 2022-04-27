@@ -8,8 +8,11 @@ import java.util.Date;
 public class XxlJobRegistry {
 
     private int id;
+    //执行器注册类型：EXECUTOR, ADMIN
     private String registryGroup;
+    //应用名称
     private String registryKey;
+    //执行器地址
     private String registryValue;
     private Date updateTime;
 

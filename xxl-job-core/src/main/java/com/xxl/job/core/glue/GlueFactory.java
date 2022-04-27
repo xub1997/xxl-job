@@ -31,13 +31,13 @@ public class GlueFactory {
 
 
 	/**
-	 * groovy class loader
+	 * groovy class loader groovy类加载器
 	 */
 	private GroovyClassLoader groovyClassLoader = new GroovyClassLoader();
 	private ConcurrentMap<String, Class<?>> CLASS_CACHE = new ConcurrentHashMap<>();
 
 	/**
-	 * load new instance, prototype
+	 * load new instance, prototype 加载新实例
 	 *
 	 * @param codeSource
 	 * @return
@@ -50,6 +50,7 @@ public class GlueFactory {
 				Object instance = clazz.newInstance();
 				if (instance!=null) {
 					if (instance instanceof IJobHandler) {
+						//注入属性
 						this.injectService(instance);
 						return (IJobHandler) instance;
 					} else {
@@ -61,6 +62,8 @@ public class GlueFactory {
 		}
 		throw new IllegalArgumentException(">>>>>>>>>>> xxl-glue, loadNewInstance error, instance is null");
 	}
+
+	//使用md5加密的字符串解析类 or 直接解析类
 	private Class<?> getCodeSourceClass(String codeSource){
 		try {
 			// md5
@@ -79,7 +82,7 @@ public class GlueFactory {
 	}
 
 	/**
-	 * inject service of bean field
+	 * inject service of bean field 注入bean 的属性值
 	 *
 	 * @param instance
 	 */

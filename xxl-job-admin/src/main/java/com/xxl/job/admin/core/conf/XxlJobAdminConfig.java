@@ -14,6 +14,8 @@ import javax.sql.DataSource;
 import java.util.Arrays;
 
 /**
+ * XxlJobAdminConfig 作为 admin 服务的启动入口，要尽可能保持简洁，作用类似于一个仓库，
+ * 来管理和持有所有的类和对象，并不会去启动具体的线程，它只需要“按下启动器的按钮”就可以了
  * xxl-job config
  *
  * @author xuxueli 2017-04-28
@@ -36,6 +38,7 @@ public class XxlJobAdminConfig implements InitializingBean, DisposableBean {
     public void afterPropertiesSet() throws Exception {
         adminConfig = this;
 
+        //XxlJobScheduler 是 admin 服务的启动器类，它会调用各个辅助类（xxxHelper）来启动对应的线程
         xxlJobScheduler = new XxlJobScheduler();
         xxlJobScheduler.init();
     }

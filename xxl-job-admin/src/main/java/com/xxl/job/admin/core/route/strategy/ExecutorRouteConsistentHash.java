@@ -14,7 +14,7 @@ import java.util.TreeMap;
 /**
  * 分组下机器地址相同，不同JOB均匀散列在不同机器上，保证分组下机器分配JOB平均；且每个JOB固定调度其中一台机器；
  *      a、virtual node：解决不均衡问题
- *      b、hash method replace hashCode：String的hashCode可能重复，需要进一步扩大hashCode的取值范围
+ *      b、hash method replace hashCode：String的hashCode可能重复，需要进一步扩大hashCode的取值范围(使用md5加密)
  * Created by xuxueli on 17/3/10.
  */
 public class ExecutorRouteConsistentHash extends ExecutorRouter {
@@ -35,6 +35,7 @@ public class ExecutorRouteConsistentHash extends ExecutorRouter {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("MD5 not supported", e);
         }
+        //reset 方法重置摘要
         md5.reset();
         byte[] keyBytes = null;
         try {
@@ -43,9 +44,12 @@ public class ExecutorRouteConsistentHash extends ExecutorRouter {
             throw new RuntimeException("Unknown string :" + key, e);
         }
 
+        //使用 update 方法处理数据
         md5.update(keyBytes);
+        //应该调用 digest 方法之中的一个完毕哈希计算并返回结果
         byte[] digest = md5.digest();
 
+        //哈希码，截断为 32 位
         // hash code, Truncate to 32-bits
         long hashCode = ((long) (digest[3] & 0xFF) << 24)
                 | ((long) (digest[2] & 0xFF) << 16)
@@ -69,6 +73,7 @@ public class ExecutorRouteConsistentHash extends ExecutorRouter {
         }
 
         long jobHash = hash(String.valueOf(jobId));
+        //返回此映射中键大于或等于 fromKey 的部分的视图
         SortedMap<Long, String> lastRing = addressRing.tailMap(jobHash);
         if (!lastRing.isEmpty()) {
             return lastRing.get(lastRing.firstKey());

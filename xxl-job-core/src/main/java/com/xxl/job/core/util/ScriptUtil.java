@@ -20,7 +20,7 @@ import java.util.List;
 public class ScriptUtil {
 
     /**
-     * make script file
+     * make script file 把脚本内容写入脚本文件（jobId_glueUpdatetime.glueType.getSuffix）
      *
      * @param scriptFileName
      * @param content

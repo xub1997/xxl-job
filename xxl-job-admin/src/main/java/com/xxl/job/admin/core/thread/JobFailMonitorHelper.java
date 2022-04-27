@@ -37,36 +37,42 @@ public class JobFailMonitorHelper {
 				// monitor
 				while (!toStop) {
 					try {
-
+						//XxlJobTrigger.triger 方法，会发现每次调度 job 时，都会先新增一个 jobLog 记录，这也是为什么 JobFailMonitorHelper 中的线程在重试时，先查询 jobLog 的原因。
+						//每次最多处理1000条失败日志（xxl_job_log ）!((trigger_code in (0, 200) and handle_code = 0) OR (handle_code = 200))  AND `alarm_status` = 0
 						List<Long> failLogIds = XxlJobAdminConfig.getAdminConfig().getXxlJobLogDao().findFailJobLogIds(1000);
 						if (failLogIds!=null && !failLogIds.isEmpty()) {
 							for (long failLogId: failLogIds) {
 
-								// lock log
+								// lock log 对执行日志上锁 告警状态：0-默认、-1=锁定状态、1-无需告警、2-告警成功、3-告警失败
 								int lockRet = XxlJobAdminConfig.getAdminConfig().getXxlJobLogDao().updateAlarmStatus(failLogId, 0, -1);
 								if (lockRet < 1) {
 									continue;
 								}
+								//读取日志详细信息
 								XxlJobLog log = XxlJobAdminConfig.getAdminConfig().getXxlJobLogDao().load(failLogId);
+								//获取作业配置信息
 								XxlJobInfo info = XxlJobAdminConfig.getAdminConfig().getXxlJobInfoDao().loadById(log.getJobId());
 
 								// 1、fail retry monitor
 								if (log.getExecutorFailRetryCount() > 0) {
+									//使用JobTriggerPoolHelper.trigger触发作业重试（异步执行）
 									JobTriggerPoolHelper.trigger(log.getJobId(), TriggerTypeEnum.RETRY, (log.getExecutorFailRetryCount()-1), log.getExecutorShardingParam(), log.getExecutorParam(), null);
 									String retryMsg = "<br><br><span style=\"color:#F39C12;\" > >>>>>>>>>>>"+ I18nUtil.getString("jobconf_trigger_type_retry") +"<<<<<<<<<<< </span><br>";
 									log.setTriggerMsg(log.getTriggerMsg() + retryMsg);
+									//更新日志
 									XxlJobAdminConfig.getAdminConfig().getXxlJobLogDao().updateTriggerInfo(log);
 								}
 
 								// 2、fail alarm monitor
 								int newAlarmStatus = 0;		// 告警状态：0-默认、-1=锁定状态、1-无需告警、2-告警成功、3-告警失败
+								//判断是否配置告警邮箱，去做发送邮件操作
 								if (info!=null && info.getAlarmEmail()!=null && info.getAlarmEmail().trim().length()>0) {
 									boolean alarmResult = XxlJobAdminConfig.getAdminConfig().getJobAlarmer().alarm(info, log);
 									newAlarmStatus = alarmResult?2:3;
 								} else {
 									newAlarmStatus = 1;
 								}
-
+								//修改告警状态
 								XxlJobAdminConfig.getAdminConfig().getXxlJobLogDao().updateAlarmStatus(failLogId, -1, newAlarmStatus);
 							}
 						}

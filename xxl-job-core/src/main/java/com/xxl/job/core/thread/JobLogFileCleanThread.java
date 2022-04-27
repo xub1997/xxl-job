@@ -29,7 +29,7 @@ public class JobLogFileCleanThread {
     private volatile boolean toStop = false;
     public void start(final long logRetentionDays){
 
-        // limit min value
+        // limit min value 最小保存3天的日志
         if (logRetentionDays < 3 ) {
             return;
         }
@@ -39,7 +39,7 @@ public class JobLogFileCleanThread {
             public void run() {
                 while (!toStop) {
                     try {
-                        // clean log dir, over logRetentionDays
+                        // clean log dir, over logRetentionDays 清理日志目录（超过 logRetentionDays的都删除）
                         File[] childDirs = new File(XxlJobFileAppender.getLogPath()).listFiles();
                         if (childDirs!=null && childDirs.length>0) {
 
@@ -73,7 +73,7 @@ public class JobLogFileCleanThread {
                                 if (logFileCreateDate == null) {
                                     continue;
                                 }
-
+                                //判断日志时间是否超过设置的时间
                                 if ((todayDate.getTime()-logFileCreateDate.getTime()) >= logRetentionDays * (24 * 60 * 60 * 1000) ) {
                                     FileUtil.deleteRecursively(childFile);
                                 }

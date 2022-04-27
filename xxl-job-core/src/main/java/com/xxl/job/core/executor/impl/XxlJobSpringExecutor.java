@@ -34,13 +34,13 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
         // init JobHandler Repository
         /*initJobHandlerRepository(applicationContext);*/
 
-        // init JobHandler Repository (for method)
+        // init JobHandler Repository (for method) 初始化JobHandler进XxlJobExecutor （ConcurrentMap<String, IJobHandler>）
         initJobHandlerMethodRepository(applicationContext);
 
-        // refresh GlueFactory
+        // refresh GlueFactory 注入bean依赖
         GlueFactory.refreshInstance(1);
 
-        // super start
+        // super start 调用父类的start方法
         try {
             super.start();
         } catch (Exception e) {
@@ -150,7 +150,7 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
                     }
                 }
 
-                // registry jobhandler
+                // registry jobhandler 注册xxl-job处理器
                 registJobHandler(name, new MethodJobHandler(bean, executeMethod, initMethod, destroyMethod));
             }
         }

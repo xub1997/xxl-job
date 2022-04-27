@@ -35,8 +35,8 @@ public class JobThread extends Thread{
 	private volatile boolean toStop = false;
 	private String stopReason;
 
-    private boolean running = false;    // if running job
-	private int idleTimes = 0;			// idel times
+    private boolean running = false;    // if running job 运行作业标志
+	private int idleTimes = 0;			// idel times 空闲时间
 
 
 	public JobThread(int jobId, IJobHandler handler) {
@@ -56,7 +56,7 @@ public class JobThread extends Thread{
      * @return
      */
 	public ReturnT<String> pushTriggerQueue(TriggerParam triggerParam) {
-		// avoid repeat
+		// avoid repeat 避免重复
 		if (triggerLogIdSet.contains(triggerParam.getLogId())) {
 			logger.info(">>>>>>>>>>> repeate trigger job, logId:{}", triggerParam.getLogId());
 			return new ReturnT<String>(ReturnT.FAIL_CODE, "repeate trigger job, logId:" + triggerParam.getLogId());
@@ -83,7 +83,7 @@ public class JobThread extends Thread{
 	}
 
     /**
-     * is running job
+     * is running job 判断是否在运行作业或者存在待运行的任务
      * @return
      */
     public boolean isRunningOrHasQueue() {
@@ -93,7 +93,7 @@ public class JobThread extends Thread{
     @Override
 	public void run() {
 
-    	// init
+    	// init 运行handler的init方法
     	try {
 			handler.init();
 		} catch (Throwable e) {
@@ -108,13 +108,14 @@ public class JobThread extends Thread{
             TriggerParam triggerParam = null;
             try {
 				// to check toStop signal, we need cycle, so wo cannot use queue.take(), instand of poll(timeout)
+				//要检查停止信号，我们需要循环，所以不能使用 queue.take()，而是 poll(timeout)
 				triggerParam = triggerQueue.poll(3L, TimeUnit.SECONDS);
 				if (triggerParam!=null) {
 					running = true;
 					idleTimes = 0;
 					triggerLogIdSet.remove(triggerParam.getLogId());
 
-					// log filename, like "logPath/yyyy-MM-dd/9999.log"
+					// log filename, like "logPath/yyyy-MM-dd/9999.log" 生成日志文件
 					String logFileName = XxlJobFileAppender.makeLogFileName(new Date(triggerParam.getLogDateTime()), triggerParam.getLogId());
 					XxlJobContext xxlJobContext = new XxlJobContext(
 							triggerParam.getJobId(),
@@ -123,12 +124,13 @@ public class JobThread extends Thread{
 							triggerParam.getBroadcastIndex(),
 							triggerParam.getBroadcastTotal());
 
-					// init job context
+					// init job context 初始化任务上下文
 					XxlJobContext.setXxlJobContext(xxlJobContext);
 
 					// execute
 					XxlJobHelper.log("<br>----------- xxl-job job execute start -----------<br>----------- Param:" + xxlJobContext.getJobParam());
 
+					//判断是否需要处理超时时间
 					if (triggerParam.getExecutorTimeout() > 0) {
 						// limit timeout
 						Thread futureThread = null;
@@ -153,17 +155,17 @@ public class JobThread extends Thread{
 							XxlJobHelper.log("<br>----------- xxl-job job execute timeout");
 							XxlJobHelper.log(e);
 
-							// handle result
+							// handle result 处理返回结果
 							XxlJobHelper.handleTimeout("job execute timeout ");
 						} finally {
 							futureThread.interrupt();
 						}
 					} else {
-						// just execute
+						// just execute 没有超时时间，直接运行
 						handler.execute();
 					}
 
-					// valid execute handle data
+					// valid execute handle data 验证处执行处理器返回结果
 					if (XxlJobContext.getXxlJobContext().getHandleCode() <= 0) {
 						XxlJobHelper.handleFail("job handle result lost.");
 					} else {
@@ -181,7 +183,7 @@ public class JobThread extends Thread{
 
 				} else {
 					if (idleTimes > 30) {
-						if(triggerQueue.size() == 0) {	// avoid concurrent trigger causes jobId-lost
+						if(triggerQueue.size() == 0) {	// avoid concurrent trigger causes jobId-lost 避免并发触发导致jobId丢失
 							XxlJobExecutor.removeJobThread(jobId, "excutor idel times over limit.");
 						}
 					}
@@ -191,7 +193,7 @@ public class JobThread extends Thread{
 					XxlJobHelper.log("<br>----------- JobThread toStop, stopReason:" + stopReason);
 				}
 
-				// handle result
+				// handle result 处理异常信息及返回结果
 				StringWriter stringWriter = new StringWriter();
 				e.printStackTrace(new PrintWriter(stringWriter));
 				String errorMsg = stringWriter.toString();
@@ -201,9 +203,9 @@ public class JobThread extends Thread{
 				XxlJobHelper.log("<br>----------- JobThread Exception:" + errorMsg + "<br>----------- xxl-job job execute end(error) -----------");
 			} finally {
                 if(triggerParam != null) {
-                    // callback handler info
+                    // callback handler info 回调处理执行信息
                     if (!toStop) {
-                        // commonm
+                        // common 正常运行情况
                         TriggerCallbackThread.pushCallBack(new HandleCallbackParam(
                         		triggerParam.getLogId(),
 								triggerParam.getLogDateTime(),
@@ -211,7 +213,7 @@ public class JobThread extends Thread{
 								XxlJobContext.getXxlJobContext().getHandleMsg() )
 						);
                     } else {
-                        // is killed
+                        // is killed 如果被杀掉了当前进程
                         TriggerCallbackThread.pushCallBack(new HandleCallbackParam(
                         		triggerParam.getLogId(),
 								triggerParam.getLogDateTime(),
@@ -223,7 +225,7 @@ public class JobThread extends Thread{
             }
         }
 
-		// callback trigger request in queue
+		// callback trigger request in queue 如果线程被中断了，但是线程里面还存在待执行的任务，需要进行回调
 		while(triggerQueue !=null && triggerQueue.size()>0){
 			TriggerParam triggerParam = triggerQueue.poll();
 			if (triggerParam!=null) {
@@ -237,7 +239,7 @@ public class JobThread extends Thread{
 			}
 		}
 
-		// destroy
+		// destroy 运行handler的destroy方法
 		try {
 			handler.destroy();
 		} catch (Throwable e) {

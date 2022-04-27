@@ -10,6 +10,7 @@ import com.xxl.job.core.util.ScriptUtil;
 import java.io.File;
 
 /**
+ * 脚本类型
  * Created by xuxueli on 17/4/27.
  */
 public class ScriptJobHandler extends IJobHandler {
@@ -25,7 +26,7 @@ public class ScriptJobHandler extends IJobHandler {
         this.gluesource = gluesource;
         this.glueType = glueType;
 
-        // clean old script file
+        // clean old script file 清除旧的脚本文件
         File glueSrcPath = new File(XxlJobFileAppender.getGlueSrcPath());
         if (glueSrcPath.exists()) {
             File[] glueSrcFileList = glueSrcPath.listFiles();
@@ -52,10 +53,10 @@ public class ScriptJobHandler extends IJobHandler {
             return;
         }
 
-        // cmd
+        // cmd 执行命令（bash、python、php、node、powershell）
         String cmd = glueType.getCmd();
 
-        // make script file
+        // make script file 脚本文件
         String scriptFileName = XxlJobFileAppender.getGlueSrcPath()
                 .concat(File.separator)
                 .concat(String.valueOf(jobId))

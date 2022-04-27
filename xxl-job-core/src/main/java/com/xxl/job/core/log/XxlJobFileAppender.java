@@ -31,18 +31,20 @@ public class XxlJobFileAppender {
 	private static String logBasePath = "/data/applogs/xxl-job/jobhandler";
 	private static String glueSrcPath = logBasePath.concat("/gluesource");
 	public static void initLogPath(String logPath){
-		// init
+		// init 判断是否指定日志路径（默认：/data/applogs/xxl-job/jobhandler）
 		if (logPath!=null && logPath.trim().length()>0) {
+			//有指定则使用指定的路径作为日志路径
 			logBasePath = logPath;
 		}
-		// mk base dir
+		// mk base dir 创建执行器日志打印目录
 		File logPathDir = new File(logBasePath);
+		//判断路径是否已经创建（无则创建，有则忽略）
 		if (!logPathDir.exists()) {
 			logPathDir.mkdirs();
 		}
 		logBasePath = logPathDir.getPath();
 
-		// mk glue dir
+		// mk glue dir  创建执行器日志打印目录（即时编译后的代码运行的日志路径）
 		File glueBaseDir = new File(logPathDir, "gluesource");
 		if (!glueBaseDir.exists()) {
 			glueBaseDir.mkdirs();
@@ -57,6 +59,7 @@ public class XxlJobFileAppender {
 	}
 
 	/**
+	 * 创建日志文件（logPath/yyyy-MM-dd/{logId}.log）
 	 * log filename, like "logPath/yyyy-MM-dd/9999.log"
 	 *
 	 * @param triggerDate
@@ -81,6 +84,7 @@ public class XxlJobFileAppender {
 	}
 
 	/**
+	 * 往日志文件追加日志内容
 	 * append log
 	 *
 	 * @param logFileName
@@ -130,6 +134,7 @@ public class XxlJobFileAppender {
 	}
 
 	/**
+	 * 从日志文件指定的行数开始读取日志内容
 	 * support read log-file
 	 *
 	 * @param logFileName
@@ -187,6 +192,7 @@ public class XxlJobFileAppender {
 	}
 
 	/**
+	 * 读取整个日志文件内容
 	 * read log data
 	 * @param logFile
 	 * @return log line content

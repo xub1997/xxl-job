@@ -85,7 +85,7 @@ public class EmbedServer {
 
                     logger.info(">>>>>>>>>>> xxl-job remoting server start success, nettype = {}, port = {}", EmbedServer.class, port);
 
-                    // start registry
+                    // start registry 启动守护线程，注册地址
                     startRegistry(appname, address);
 
                     // wait util stop
@@ -162,13 +162,13 @@ public class EmbedServer {
             bizThreadPool.execute(new Runnable() {
                 @Override
                 public void run() {
-                    // do invoke
+                    // do invoke 进行反射调用，返回调用结果
                     Object responseObj = process(httpMethod, uri, requestData, accessTokenReq);
 
-                    // to json
+                    // to json 调用结果转json
                     String responseJson = GsonTool.toJson(responseObj);
 
-                    // write response
+                    // write response 返回响应信息
                     writeResponse(ctx, keepAlive, responseJson);
                 }
             });

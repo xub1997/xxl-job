@@ -54,24 +54,27 @@ public class TriggerCallbackThread {
             return;
         }
 
-        // callback
+        // callback 结果回调
         triggerCallbackThread = new Thread(new Runnable() {
 
             @Override
             public void run() {
 
-                // normal callback
+                // normal callback 正常回调处理
                 while(!toStop){
                     try {
+                        //移除头部元素（没有则等待）
                         HandleCallbackParam callback = getInstance().callBackQueue.take();
                         if (callback != null) {
 
                             // callback list param
                             List<HandleCallbackParam> callbackParamList = new ArrayList<HandleCallbackParam>();
+                            //把队列里面所有的元素给放进Collection里面（不用一直轮训）
                             int drainToNum = getInstance().callBackQueue.drainTo(callbackParamList);
+                            //把刚才移除的元素加进去
                             callbackParamList.add(callback);
 
-                            // callback, will retry if error
+                            // callback, will retry if error 回调数据（失败就记录到文件里面，进行jdk的序列化）
                             if (callbackParamList!=null && callbackParamList.size()>0) {
                                 doCallback(callbackParamList);
                             }
@@ -83,7 +86,7 @@ public class TriggerCallbackThread {
                     }
                 }
 
-                // last callback
+                // last callback 最后回调一次数据
                 try {
                     List<HandleCallbackParam> callbackParamList = new ArrayList<HandleCallbackParam>();
                     int drainToNum = getInstance().callBackQueue.drainTo(callbackParamList);
@@ -104,12 +107,13 @@ public class TriggerCallbackThread {
         triggerCallbackThread.start();
 
 
-        // retry
+        // retry 回调重试线程
         triggerRetryCallbackThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 while(!toStop){
                     try {
+                        //读取序列化进文件的回调参数进行重试
                         retryFailCallbackFile();
                     } catch (Exception e) {
                         if (!toStop) {

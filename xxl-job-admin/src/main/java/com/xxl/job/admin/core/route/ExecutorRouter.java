@@ -14,7 +14,8 @@ public abstract class ExecutorRouter {
     protected static Logger logger = LoggerFactory.getLogger(ExecutorRouter.class);
 
     /**
-     * route address
+     * 执行器路由
+     * route address 路由地址
      *
      * @param addressList
      * @return  ReturnT.content=address

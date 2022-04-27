@@ -15,6 +15,12 @@ import java.util.List;
  */
 public class ExecutorRouteBusyover extends ExecutorRouter {
 
+    /**
+     * 忙碌转移(通过调用空闲心跳，判断作业作业在对应执行器地址上是否正在运行或存在待运行作业，返回其中一个空闲的执行器地址)
+     * @param triggerParam
+     * @param addressList
+     * @return
+     */
     @Override
     public ReturnT<String> route(TriggerParam triggerParam, List<String> addressList) {
         StringBuffer idleBeatResultSB = new StringBuffer();

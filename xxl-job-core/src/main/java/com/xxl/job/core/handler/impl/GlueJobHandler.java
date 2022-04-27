@@ -4,7 +4,7 @@ import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.IJobHandler;
 
 /**
- * glue job handler
+ * glue job handler 即时编译的Java xxl-job处理器
  *
  * @author xuxueli 2016-5-19 21:05:45
  */
